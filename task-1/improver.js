@@ -116,7 +116,7 @@ const runImprovement = async () => {
     return;
   }
 
-  console.log(articlesToFix.length);
+  console.log(`${articlesToFix.length} articles to fix`);
 
   for (const article of articlesToFix) {
     console.log(article.title);
@@ -128,7 +128,7 @@ const runImprovement = async () => {
       console.log("No competitors found");
       continue;
     }
-    console.log("competitorsLink");
+    console.log("competitorsLinks: ", competitorLinks);
 
     let compContent1 = await scrapeUrl(competitorLinks[0], browser);
     let compContent2 = "";
