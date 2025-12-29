@@ -10,10 +10,12 @@ const scrap = async () => {
     waitUntil: "networkidle2",
   });
   try {
-    const selector = ".is-search-input";
+    const selector = ".page-numbers:last-child";
     await page.locator(selector).click();
-    await page.type(selector, "Google Ads");
-    await page.keyboard.press("Enter");
+
+    // await page.locator(selector).click();
+    // await page.type(selector, "Google Ads");
+    // await page.keyboard.press("Enter");
 
     // await page.waitForSelector(`.is-search-input`, {
     //   visible: true,
