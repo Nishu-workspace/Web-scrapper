@@ -42,10 +42,28 @@ const scrap = async () => {
 
     console.log("--- Last 5 Blogs Found ---");
     console.table(lastFive);
+
+    for (const key in lastFive) {
+      const blog = await page.goto(`${lastFive[key].url}`, {
+        waitUntil: "networkidle2",
+      });
+      const blogDetails = await page.$eval("#content", (el) => {
+        const subHeading = el.querySelector("h2").innerText.trim() || "";
+        const image = el.querySelector("img").getAttribute("src") || "";
+        const content =
+          el.querySelector(".elementor-widget-theme-post-content").innerHTML ||
+          "";
+        return { subHeading, image, content };
+      });
+      lastFive[key] = { ...lastFive[key], blogDetails };
+    }
+    console.log(lastFive);
     await page.screenshot({ path: "example.png" });
+    await browser.close();
   } catch (err) {
     console.log("something went wrong", err);
+    await browser.close();
   }
-  //   await browser.close();
+  //
 };
 scrap();
