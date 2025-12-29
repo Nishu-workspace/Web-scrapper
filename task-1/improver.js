@@ -4,6 +4,7 @@ import SerpApi from "google-search-results-nodejs";
 import puppeteer from "puppeteer";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import ArticleModel from "./model/articleModel.js";
+import { GoogleGenAI } from "@google/genai";
 
 const search = new SerpApi.GoogleSearch(process.env.SERPAPI_KEY);
 const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -69,38 +70,77 @@ const scrapeUrl = async (url, browser) => {
     return;
   }
 };
-
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const rewriteArticle = async (original, competitor1, competitor2) => {
-  const prompt = `
-    You are an expert SEO copywriter.
+  const prompt = `You are an expert SEO copywritier, just understand my 
     
-    ORIGINAL ARTICLE:
-    ${original.substring(0, 1500)}
-
-    COMPETITOR 1 CONTENT:
-    ${competitor1}
-
-    COMPETITOR 2 CONTENT:
-    ${competitor2}
-
-    TASK:
-    Rewrite the ORIGINAL ARTICLE to make it better.
-    - Incorporate insights from the Competitors.
-    - Use professional Markdown formatting (Headings, lists, bold text).
-    - Maintain the core message of the original.
-    - Do NOT include conversational filler like "Here is the rewritten article". Return ONLY the markdown content.
-    `;
+    orginal article:${original}
+    note: don't reply`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    return text;
-  } catch (error) {
-    console.log("Gemini Error:", error);
+    const chat = ai.chats.create({
+      model: "gemini-2.5-flash",
+      history: [],
+    });
+
+    const response1 = await chat.sendMessage({
+      message: prompt,
+    });
+    console.log("Chat response 1:", response1.text);
+
+    const response2 = await chat.sendMessage({
+      message: `Here is the competitor's blog data :
+    ${competitor1}
+    
+    note: do not reply yet just understand`,
+    });
+    console.log("Chat response 2:", response2.text);
+
+    const response3 = await chat.sendMessage({
+      message: `Here is another's competitro's blog data:
+    ${competitor2}
+    
+    note: Now considering all three blogs, update/rewrite my blog and reply with only markup version of it. 
+    No extra lines just markup version`,
+    });
+    console.log("last response", response3.text);
+    return response3.text;
+  } catch (err) {
+    console.log(err.message);
     return original;
   }
 };
+// const rewriteArticle = async (original, competitor1, competitor2) => {
+//   const prompt = `
+//     You are an expert SEO copywriter.
+
+//     ORIGINAL ARTICLE:
+//     ${original.substring(0, 1500)}
+
+//     COMPETITOR 1 CONTENT:
+//     ${competitor1}
+
+//     COMPETITOR 2 CONTENT:
+//     ${competitor2}
+
+//     TASK:
+//     Rewrite the ORIGINAL ARTICLE to make it better.
+//     - Incorporate insights from the Competitors.
+//     - Use professional Markdown formatting (Headings, lists, bold text).
+//     - Maintain the core message of the original.
+//     - Do NOT include conversational filler like "Here is the rewritten article". Return ONLY the markdown content.
+//     `;
+
+//   try {
+//     const result = await model.generateContent(prompt);
+//     const response = await result.response;
+//     const text = response.text();
+//     return text;
+//   } catch (error) {
+//     console.log("Gemini Error:", error);
+//     return original;
+//   }
+// };
 
 const runImprovement = async () => {
   const browser = await puppeteer.launch({
