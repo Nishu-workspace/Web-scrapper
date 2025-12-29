@@ -1,11 +1,24 @@
+import "dotenv/config";
 import puppeteer from "puppeteer";
 import TurndownService from "turndown";
+
+import mongoose from "mongoose";
+import ArticleModel from "./model/articleModel.js";
 const turndownService = new TurndownService();
+await mongoose
+  .connect(process.env.MONGODB_URI, {})
+  .then(() => {
+    console.log("DB connected in scrapper");
+  })
+  .catch((err) => {
+    console.log("Error occurred while connecting to db", err);
+  });
 const browser = await puppeteer.launch({
   headless: false,
   defaultViewport: null,
   args: ["--start-maximized"],
 });
+
 const page = await browser.newPage();
 const scrap = async () => {
   await page.goto("https://beyondchats.com/blogs/", {
@@ -61,12 +74,28 @@ const scrap = async () => {
       blogDetails.content = turndownService.turndown(blogDetails.content);
       lastFive[key] = { ...lastFive[key], blogDetails };
     }
+    for (const article of lastFive) {
+      await ArticleModel.findOneAndUpdate(
+        { url: article.url },
+        {
+          title: article.title,
+          url: article.url,
+          subHeading: article.blogDetails.subHeading,
+          image: article.blogDetails.image,
+          content: article.blogDetails.content,
+          originalContent: article.blogDetails.content,
+        },
+        { upsert: true, new: true }
+      );
+    }
     console.log(lastFive);
     await page.screenshot({ path: "example.png" });
     await browser.close();
+    mongoose.connection.close();
   } catch (err) {
     console.log("something went wrong", err);
     await browser.close();
+    mongoose.connection.close();
   }
   //
 };

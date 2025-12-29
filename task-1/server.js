@@ -3,12 +3,15 @@ dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import ArticleModel from "./model/articleModel";
+import ArticleModel from "./model/articleModel.js";
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
-
+app.get("/", (req, res) => {
+  res.send("Hello, World!");
+});
 app.get("/api/articles", async (req, res) => {
   try {
     const articles = await ArticleModel.find();
@@ -50,12 +53,12 @@ app.delete("/api/articles/:id", async (req, res) => {
   }
 });
 
-app.listen(8080, async () => {
+app.listen(PORT, async () => {
   await mongoose
     .connect(process.env.MONGODB_URI)
     .then(() => console.log("connted to Db"))
     .catch((err) => {
       console.log("Error connecting to Mongo", err.message);
     });
-  console.log("Server listening to ", 8080);
+  console.log("Server listening to ", PORT);
 });
