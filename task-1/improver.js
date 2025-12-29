@@ -1,14 +1,13 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import SerpApi from "google-search-results-nodejs";
-import puppeteer from "puppeteer";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+
 import ArticleModel from "./model/articleModel.js";
 import { GoogleGenAI } from "@google/genai";
-
+puppeteer.use(StealthPlugin());
 const search = new SerpApi.GoogleSearch(process.env.SERPAPI_KEY);
-const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAi.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 mongoose
   .connect(process.env.MONGODB_URI)
@@ -64,7 +63,7 @@ const scrapeUrl = async (url, browser) => {
       );
     });
     await page.close();
-    return content.slice(0, 3000);
+    return content;
   } catch (error) {
     console.log(`Failed to scrape ${url}: ${error.message}`);
     return;
@@ -72,41 +71,35 @@ const scrapeUrl = async (url, browser) => {
 };
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const rewriteArticle = async (original, competitor1, competitor2) => {
-  const prompt = `You are an expert SEO copywritier, just understand my 
+  // Combine everything into one clear instruction
+  const singlePrompt = `
+    You are an expert SEO copywriter. I need you to rewrite MY ARTICLE by incorporating unique insights and missing data from COMPETITOR 1 and COMPETITOR 2.
     
-    orginal article:${original}
-    note: don't reply`;
+    MY ARTICLE:
+    ${original}
+
+    COMPETITOR 1:
+    ${competitor1}
+
+    COMPETITOR 2:
+    ${competitor2}
+
+    TASK:
+    - Update my article to be more comprehensive than both competitors.
+    - Use professional Markdown (H2, H3, lists).
+    - Maintain the original tone but improve the SEO structure.
+    - Reply ONLY with the rewritten Markdown content.
+  `;
 
   try {
-    const chat = ai.chats.create({
+    const result = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      history: [],
+      contents: [{ role: "user", parts: [{ text: singlePrompt }] }],
     });
-
-    const response1 = await chat.sendMessage({
-      message: prompt,
-    });
-    console.log("Chat response 1:", response1.text);
-
-    const response2 = await chat.sendMessage({
-      message: `Here is the competitor's blog data :
-    ${competitor1}
-    
-    note: do not reply yet just understand`,
-    });
-    console.log("Chat response 2:", response2.text);
-
-    const response3 = await chat.sendMessage({
-      message: `Here is another's competitro's blog data:
-    ${competitor2}
-    
-    note: Now considering all three blogs, update/rewrite my blog and reply with only markup version of it. 
-    No extra lines just markup version`,
-    });
-    console.log("last response", response3.text);
-    return response3.text;
+    console.log("Rewrite content", result.text);
+    return result.text;
   } catch (err) {
-    console.log(err.message);
+    console.error("Gemini 2.5 Error:", err.message);
     return original;
   }
 };
@@ -149,7 +142,7 @@ const runImprovement = async () => {
     args: ["--start-maximized"],
   });
 
-  const articlesToFix = await ArticleModel.find({ isImproved: false }).limit(1);
+  const articlesToFix = await ArticleModel.find({ isImproved: false }).limit(5);
 
   if (articlesToFix.length === 0) {
     console.log("No improvement needed..");
