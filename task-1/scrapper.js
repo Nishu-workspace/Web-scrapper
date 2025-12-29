@@ -1,4 +1,6 @@
 import puppeteer from "puppeteer";
+import TurndownService from "turndown";
+const turndownService = new TurndownService();
 const browser = await puppeteer.launch({
   headless: false,
   defaultViewport: null,
@@ -50,11 +52,13 @@ const scrap = async () => {
       const blogDetails = await page.$eval("#content", (el) => {
         const subHeading = el.querySelector("h2").innerText.trim() || "";
         const image = el.querySelector("img").getAttribute("src") || "";
-        const content =
+        let content =
           el.querySelector(".elementor-widget-theme-post-content").innerHTML ||
           "";
+
         return { subHeading, image, content };
       });
+      blogDetails.content = turndownService.turndown(blogDetails.content);
       lastFive[key] = { ...lastFive[key], blogDetails };
     }
     console.log(lastFive);
