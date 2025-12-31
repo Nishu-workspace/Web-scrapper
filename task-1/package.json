@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "webpack --mode production"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
