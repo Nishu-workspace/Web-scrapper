@@ -4,6 +4,61 @@ Note: https://web-scrapper-iota.vercel.app/ is a live link, with 4 enhaced post/
 
 This project is a MERN stack application designed to scrape blog articles, store them in a database, and use Generative AI (Google Gemini) to rewrite and improve the content using SEO best practices.
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph "Frontend Layer"
+        UI["React App (App.jsx)"]
+        User((User))
+    end
+
+    subgraph "Backend API Layer"
+        API["Express Server (server.js)"]
+        Router["API Routes"]
+    end
+
+    subgraph "Background Services"
+        Worker["Deep Improve Worker (improver.js)"]
+        Scraper["Puppeteer Scraper"]
+    end
+
+    subgraph "Data Layer"
+        DB[("MongoDB Atlas")]
+    end
+
+    subgraph "External APIs"
+        Gemini["Google Gemini AI"]
+        Serp["SerpApi (Google Search)"]
+        Web["External Websites"]
+    end
+
+    %% User Interaction
+    User -->|Clicks Auto-Improve| UI
+    UI <-->|HTTP Requests| API
+
+    %% API Flow (Quick Mode)
+    API -->|1. Find Links| Serp
+    API -->|2. Rewrites Content| Gemini
+    API <-->|Read/Write| DB
+
+    %% Worker Flow (Deep Mode)
+    Worker -->|1. Fetch Unimproved| DB
+    Worker -->|2. Search Competitors| Serp
+    Worker -->|3. Scrape Full Text| Scraper
+    Scraper -->|Get Content| Web
+    Worker -->|4. Deep Synthesis| Gemini
+    Worker -->|5. Save Update| DB
+
+    %% Styling
+    classDef blue fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef green fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef orange fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
+    
+    class UI,API,Router blue;
+    class Worker,Scraper green;
+    class Gemini,Serp,Web orange;
+```
 ## 📂 Project Structure
 
 The system features a **Dual-Mode** AI improvement architecture:
