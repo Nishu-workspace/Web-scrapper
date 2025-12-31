@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
@@ -9,6 +10,9 @@ function App() {
   const [viewMode, setViewMode] = useState("improved");
   const [loading, setLoading] = useState(false);
 
+  // New State for Mobile Sidebar
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     axios
       .get(`${import.meta.env.VITE_BACKEND_URL}/api/articles`)
@@ -16,7 +20,6 @@ function App() {
         setArticles(res.data);
         if (res.data.length > 0) {
           setSelectedArticle(res.data[0]);
-
           setViewMode(res.data[0].isImproved ? "improved" : "original");
         }
       })
@@ -29,7 +32,9 @@ function App() {
 
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/articles/${selectedArticle._id}/improve`
+        `${import.meta.env.VITE_BACKEND_URL}/api/articles/${
+          selectedArticle._id
+        }/improve`
       );
       const updatedArticle = res.data;
 
@@ -49,10 +54,29 @@ function App() {
 
   return (
     <div className="container">
-      <aside className="sidebar">
-        <h2>BeyondChats Blogs</h2>
+      {/* Mobile Overlay (Closes menu when clicked) */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar with Mobile Class Logic */}
+      <aside className={`sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}>
+        <div className="sidebar-header">
+          <h2>BeyondChats Blogs</h2>
+          {/* Close button for mobile */}
+          <button
+            className="close-sidebar-btn"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            ×
+          </button>
+        </div>
+
         <div className="list">
-          {articles.map((article) => (
+          {articles?.map((article) => (
             <div
               key={article._id}
               className={`list-item ${
@@ -60,8 +84,8 @@ function App() {
               }`}
               onClick={() => {
                 setSelectedArticle(article);
-
                 setViewMode(article.isImproved ? "improved" : "original");
+                setMobileMenuOpen(false); // Close menu on selection (Mobile UX)
               }}
             >
               <h4>{article.title}</h4>
@@ -80,6 +104,15 @@ function App() {
           <>
             <header className="article-header">
               <div className="header-left">
+                {/* HAMBURGER MENU (Visible only on Mobile) */}
+                <button
+                  className="menu-btn"
+                  onClick={() => setMobileMenuOpen(true)}
+                  aria-label="Open Menu"
+                >
+                  ☰
+                </button>
+
                 <a
                   href={selectedArticle.url}
                   target="_blank"
@@ -92,13 +125,7 @@ function App() {
 
               <div className="header-actions">
                 {!selectedArticle.isImproved && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-end",
-                    }}
-                  >
+                  <div className="improve-wrapper">
                     <button
                       className="improve-btn"
                       onClick={handleImprove}
@@ -106,15 +133,8 @@ function App() {
                     >
                       {loading ? "Generating..." : "✨ Auto-Improve"}
                     </button>
-
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "#666",
-                        marginTop: "4px",
-                      }}
-                    >
-                      *Process runs on Backend (No Scraping)
+                    <span className="tech-note">
+                      *Backend Process (No Scraping)
                     </span>
                   </div>
                 )}
@@ -130,11 +150,6 @@ function App() {
                     className={viewMode === "improved" ? "active" : ""}
                     onClick={() => setViewMode("improved")}
                     disabled={!selectedArticle.isImproved}
-                    title={
-                      !selectedArticle.isImproved
-                        ? "Run Auto-Improve first"
-                        : ""
-                    }
                   >
                     AI Improved
                   </button>
@@ -164,7 +179,7 @@ function App() {
               {viewMode === "improved" &&
                 selectedArticle.references?.length > 0 && (
                   <div className="references">
-                    <h3>References used by AI:</h3>
+                    <h3>References:</h3>
                     <ul>
                       {selectedArticle.references.map((ref, index) => (
                         <li key={index}>
@@ -179,7 +194,15 @@ function App() {
             </div>
           </>
         ) : (
-          <div className="empty-state">Select an article to view</div>
+          <div className="empty-state">
+            <button
+              className="menu-btn"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              ☰ Open Menu
+            </button>
+            <p>Select an article to view</p>
+          </div>
         )}
       </main>
     </div>
