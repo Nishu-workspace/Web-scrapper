@@ -142,7 +142,7 @@ const runImprovement = async () => {
     args: ["--start-maximized"],
   });
 
-  const articlesToFix = await ArticleModel.find({ isImproved: false }).limit(5);
+  const articlesToFix = await ArticleModel.find({ isImproved: false }).limit(1);
 
   if (articlesToFix.length === 0) {
     console.log("No improvement needed..");
