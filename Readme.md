@@ -1,5 +1,7 @@
 # BeyondChats Blog AI Enhancer
 
+Note: https://web-scrapper-iota.vercel.app/ is a live link, with 4 enhaced post/articles with proper scrapping, the last one is left to test. You can either run the whole script in the backend seperately to test it or tap on improve in the frontend. (The frontend button doesn't scrap the competitor's data).
+
 This project is a MERN stack application designed to scrape blog articles, store them in a database, and use Generative AI (Google Gemini) to rewrite and improve the content using SEO best practices.
 
 ## 📂 Project Structure
