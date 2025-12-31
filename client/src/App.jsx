@@ -11,7 +11,7 @@ function App() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/articles")
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/articles`)
       .then((res) => {
         setArticles(res.data);
         if (res.data.length > 0) {
